@@ -1,4 +1,4 @@
-# Freeru Companion
+# WebPrompt
 ## English description
 This script brings a Windows Terminal-inspired command prompt to your browser. Seamlessly integrated into websites, it offers a lightweight and interactive way to execute commands or perform quick tasks directly in your browser environment. 
 
