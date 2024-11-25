@@ -16,9 +16,7 @@ The prompt looks like this:
 
 [Changelog](CHANGELOG.md)
 
-Write problems found while working with the script to [Issues](https://github.com/MAX1MDEV/WebPrompt/issues).
-
-**Disclaimer: the usage of this script may violate the Terms of Service of the site it runs on. Use at your own risk.**
+**Found any issues or want a new feature?** Write them in the [Issues](https://github.com/MAX1MDEV/WebPrompt/issues) section as a *Bug Report* or *Feature Request*.
 
 ### Supported site
 | **Command**                              | **Function**                                                                                   |
@@ -64,9 +62,7 @@ Automatic updating of the script may require your confirmation.
 
 [Список изменений](CHANGELOG.md)
 
-Проблемы, найденные при работе со скриптом пишите в [Issues](https://github.com/MAX1MDEV/WebPrompt/issues).
-
-**Отказ от ответственности: использование данного скрипта может нарушать правила сайта, на котором он используется. Используйте на свой страх и риск.**
+**Нашли проблему или хотите предложить новую команду?** Напишите об этом в [Issues](https://github.com/MAX1MDEV/WebPrompt/issues) как *Bug Report* или *Feature Request*.
 
 ### Поддерживаемые команды
 | **Команда**                              | **Функция**                                                                                     |
