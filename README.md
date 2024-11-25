@@ -60,7 +60,7 @@ Automatic updating of the script may require your confirmation.
 
 Консоль выглядит так:
 
-<img src="images/script_prompt_v.7.5_ru.png" title="Панель скрипта" alt="Панель скрипта">
+<img src="images/script_prompt_v.1.0_ru.png" title="Панель скрипта" alt="Панель скрипта">
 
 [Список изменений](CHANGELOG.md)
 
