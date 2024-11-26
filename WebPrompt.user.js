@@ -2,7 +2,7 @@
 // @name WebPrompt
 // @author MaximDev
 // @namespace MAX1MDEV
-// @version 1.0
+// @version 1.1
 // @homepage https://github.com/MAX1MDEV/WebPrompt
 // @supportURL https://github.com/MAX1MDEV/WebPrompt/issues
 // @updateURL https://raw.githubusercontent.com/MAX1MDEV/WebPrompt/main/WebPrompt.user.js
@@ -480,259 +480,244 @@
         window.location.reload(true);
     }
     const commands = {
-    help: {
-        descriptionKey: 'helpDescription',
-        action: function(args) {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            if (args.length > 0) {
-                const cmd = commands[args[0]];
-                if (cmd) {
-                    commandOutput.innerHTML += `<p>${args[0]}: ${t[cmd.descriptionKey]}</p>`;
-                } else {
-                    commandOutput.innerHTML += `<p class="error-text">${args[0]} ${t.commandNotFound}</p>`;
-                }
-            } else {
-                commandOutput.innerHTML += `<p>${t.availableCommands} ${Object.keys(commands).join(', ')}</p>`;
-                commandOutput.innerHTML += `<p>${t.helpUsage}</p>`;
-            }
-        }
-    },
-    clearcache: {
-        descriptionKey: 'clearCacheDescription',
-        action: function() {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            commandOutput.innerHTML += `<p>${t.areYouSure} (${t.clearCacheConfirm})</p>`;
-            commandInput.value = '';
-            commandInput.setAttribute('data-waiting-confirmation', 'true');
-        }
-    },
-    cls: {
-        descriptionKey: 'clsDescription',
-        action: function() {
-            commandOutput.innerHTML = '';
-        }
-    },
-    savesite: {
-        descriptionKey: 'saveSiteDescription',
-        action: function() {
-            promptSaveSite();
-        }
-    },
-    savesiteimages: {
-        descriptionKey: 'saveSiteImagesDescription',
-        action: saveSiteImages
-    },
-    savesitevideos: {
-        descriptionKey: 'saveSiteVideosDescription',
-        action: saveSiteVideos
-    },
-    savesitemedia: {
-        descriptionKey: 'saveSiteMediaDescription',
-        action: saveSiteMedia
-    },
-    language: {
-        descriptionKey: 'languageDescription',
-        action: function(args) {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-
-            if (args.length === 0) {
-                commandOutput.innerHTML += `<p>${t.currentLanguage} ${lang}</p>`;
-                commandOutput.innerHTML += `<p>${t.languageUsage}</p>`;
-                commandOutput.innerHTML += `<p>${t.languageExamples}</p>`;
-                return;
-            }
-
-            const newLang = args[0].toLowerCase();
-            if (['english', '-en'].includes(newLang)) {
-                setLanguage('english');
-                commandOutput.innerHTML += '<p>Language changed to English</p>';
-            } else if (['russian', '-ru'].includes(newLang)) {
-                setLanguage('russian');
-                commandOutput.innerHTML += '<p>Язык изменен на русский</p>';
-            } else {
-                commandOutput.innerHTML += '<p>Invalid language. Use: english/-en or russian/-ru</p>';
-            }
-        }
-    },
-    screenshot: {
-        descriptionKey: 'screenshotDescription',
-        action: function() {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            commandOutput.innerHTML += `<p>${t.takingScreenshot}</p>`;
-
-            html2canvas(document.documentElement, {
-                height: window.innerHeight,
-                windowHeight: window.innerHeight,
-                scrollY: -window.scrollY
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'screenshot.png';
-                link.href = canvas.toDataURL();
-                link.click();
-                commandOutput.innerHTML += `<p>${t.screenshotSaved}</p>`;
-            }).catch(error => {
-                console.error('Screenshot error:', error);
-                commandOutput.innerHTML += `<p>${t.screenshotError}</p>`;
-            });
-        }
-    },
-
-translate: {
-        descriptionKey: 'translateDescription',
-        action: function(args) {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            const targetLang = args[0] || 'en';
-
-            if (document.getElementById('google_translate_element')) {
-                commandOutput.innerHTML += `<p>${t.translationAlreadyActive}</p>`;
-                return;
-            }
-
-            const translateElement = document.createElement('div');
-            translateElement.id = 'google_translate_element';
-            translateElement.style.position = 'fixed';
-            translateElement.style.top = '10px';
-            translateElement.style.right = '10px';
-            translateElement.style.zIndex = '9999999';
-            document.body.appendChild(translateElement);
-
-            const script = document.createElement('script');
-            script.src = `//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit`;
-            script.onerror = () => {
-                commandOutput.innerHTML += `<p>${t.translationScriptError}</p>`;
-            };
-            document.body.appendChild(script);
-
-            unsafeWindow.googleTranslateElementInit = function() {
-                new google.translate.TranslateElement({
-                    pageLanguage: 'auto',
-                    includedLanguages: 'en,ru,es,fr,de,it,pt,ja,ko,zh-CN,ar',
-                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-                }, 'google_translate_element');
-                commandOutput.innerHTML += `<p>${t.translationActivated}</p>`;
-            };
-        }
-    },
-
-darkmode: {
-        descriptionKey: 'darkmodeDescription',
-        action: function() {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            const currentUrl = window.location.hostname;
-            let darkModeUrls = GM_getValue('darkModeUrls', []);
-
-            if (darkModeUrls.includes(currentUrl)) {
-                darkModeUrls = darkModeUrls.filter(url => url !== currentUrl);
-                const darkModeStyle = document.getElementById('darkModeStyle');
-                if (darkModeStyle) {
-                    darkModeStyle.remove();
-                }
-                commandOutput.innerHTML += `<p>${t.darkModeDisabled}</p>`;
-            } else {
-                darkModeUrls.push(currentUrl);
-                const style = document.createElement('style');
-                style.id = 'darkModeStyle';
-                style.textContent = `
-                    body, body * {
-                        background-color: #1a1a1a !important;
-                        color: #e0e0e0 !important;
-                        border-color: #333 !important;
-                    }
-                `;
-                document.head.appendChild(style);
-                commandOutput.innerHTML += `<p>${t.darkModeEnabled}</p>`;
-            }
-
-            GM_setValue('darkModeUrls', darkModeUrls);
-        }
-    },
-
-timer: {
-    descriptionKey: 'timerDescription',
-    action: function(args) {
-        const minutes = parseInt(args[0]) || 5;
-        const seconds = minutes * 60;
-        let remainingTime = seconds;
-
-        const intervalId = setInterval(() => {
-            remainingTime--;
-            const mins = Math.floor(remainingTime / 60);
-            const secs = remainingTime % 60;
-            commandOutput.innerHTML += `<p>Remaining time: ${mins}:${secs.toString().padStart(2, '0')}</p>`;
-
-            if (remainingTime <= 0) {
-                clearInterval(intervalId);
-                alert('Timer finished!');
-            }
-        }, 1000);
-    }
-},
-
-calc: {
-    descriptionKey: 'calcDescription',
-    action: function(args) {
-        const expression = args.join(' ');
-        try {
-            const result = eval(expression);
-            commandOutput.innerHTML += `<p>Result: ${result}</p>`;
-        } catch (error) {
-            commandOutput.innerHTML += `<p>Error: Invalid expression</p>`;
-        }
-    }
-},
-
-weather: {
-        descriptionKey: 'weatherDescription',
-        action: function(args) {
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
-            const city = args.join(' ') || 'Moscow';
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: `https://open-weather13.p.rapidapi.com/city/${encodeURIComponent(city)}/${lang === 'english' ? 'EN' : 'RU'}`,
-                headers: {
-                    "x-rapidapi-key": "d38edf19d1msh96b9a6f2387f7a5p11277fjsndd57f1eea2c4",
-                    "x-rapidapi-host": "open-weather13.p.rapidapi.com"
-                },
-                onload: function(response) {
-                    if (response.status === 200) {
-                        const data = JSON.parse(response.responseText);
-                        const weather = data.weather[0].description;
-                        const temp = data.main.temp;
-                        commandOutput.innerHTML += `<p>${t.weatherIn.replace('{city}', city)}: ${weather}, ${t.temperature}: ${temp}°C</p>`;
+        help: {
+            descriptionKey: 'helpDescription',
+            action: function(args) {
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
+                if (args.length > 0) {
+                    const cmd = commands[args[0]];
+                    if (cmd) {
+                        commandOutput.innerHTML += `<p>${args[0]}: ${t[cmd.descriptionKey]}</p>`;
                     } else {
-                        commandOutput.innerHTML += `<p>${t.errorFetchingWeather}</p>`;
+                        commandOutput.innerHTML += `<p class="error-text">${args[0]} ${t.commandNotFound}</p>`;
                     }
-                },
-                onerror: function(error) {
-                    commandOutput.innerHTML += `<p>${t.errorFetchingWeather}</p>`;
+                } else {
+                    commandOutput.innerHTML += `<p>${t.availableCommands} ${Object.keys(commands).join(', ')}</p>`;
+                    commandOutput.innerHTML += `<p>${t.helpUsage}</p>`;
                 }
-            });
-        }
-    },
+            }
+        },
+        clearcache: {
+            descriptionKey: 'clearCacheDescription',
+            action: function() {
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
+                commandOutput.innerHTML += `<p>${t.areYouSure} (${t.clearCacheConfirm})</p>`;
+                commandInput.value = '';
+                commandInput.setAttribute('data-waiting-confirmation', 'clearcache');
+            }
+        },
+        cls: {
+            descriptionKey: 'clsDescription',
+            action: function() {
+                commandOutput.innerHTML = '';
+            }
+        },
+        savesite: {
+            descriptionKey: 'saveSiteDescription',
+            action: function() {
+                promptSaveSite();
+            }
+        },
+        savesiteimages: {
+            descriptionKey: 'saveSiteImagesDescription',
+            action: saveSiteImages
+        },
+        savesitevideos: {
+            descriptionKey: 'saveSiteVideosDescription',
+            action: saveSiteVideos
+        },
+        savesitemedia: {
+            descriptionKey: 'saveSiteMediaDescription',
+            action: saveSiteMedia
+        },
+        language: {
+            descriptionKey: 'languageDescription',
+            action: function(args) {
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
 
-summarize: {
-    descriptionKey: 'summarizeDescription',
-    action: function() {
-        const text = document.body.innerText;
-        const sentences = text.match(/[^\.!\?]+[\.!\?]+/g);
-        const summary = sentences.slice(0, 3).join(' ');
-        commandOutput.innerHTML += `<p>Summary: ${summary}</p>`;
-    }
-}
-};
-function promptSaveSite() {
-        const lang = GM_getValue('commandPanelLanguage', 'english');
-        const t = translations[lang];
-        commandOutput.innerHTML += `<p>${t.saveSiteConfirm}</p>`;
-        commandInput.value = '';
-        commandInput.setAttribute('data-waiting-confirmation', 'savesite');
+                if (args.length === 0) {
+                    commandOutput.innerHTML += `<p>${t.currentLanguage} ${lang}</p>`;
+                    commandOutput.innerHTML += `<p>${t.languageUsage}</p>`;
+                    commandOutput.innerHTML += `<p>${t.languageExamples}</p>`;
+                    return;
+                }
+
+                const newLang = args[0].toLowerCase();
+                if (['english', '-en'].includes(newLang)) {
+                    setLanguage('english');
+                    commandOutput.innerHTML += '<p>Language changed to English</p>';
+                } else if (['russian', '-ru'].includes(newLang)) {
+                    setLanguage('russian');
+                    commandOutput.innerHTML += '<p>Язык изменен на русский</p>';
+                } else {
+                    commandOutput.innerHTML += '<p>Invalid language. Use: english/-en or russian/-ru</p>';
+                }
+            }
+        },
+        screenshot: {
+            descriptionKey: 'screenshotDescription',
+            action: function() {
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
+                commandOutput.innerHTML += `<p>${t.takingScreenshot}</p>`;
+                html2canvas(document.documentElement, {
+                    height: window.innerHeight,
+                    windowHeight: window.innerHeight,
+                    scrollY: -window.scrollY
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'screenshot.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    commandOutput.innerHTML += `<p>${t.screenshotSaved}</p>`;
+                }).catch(error => {
+                    console.error('Screenshot error:', error);
+                    commandOutput.innerHTML += `<p>${t.screenshotError}</p>`;
+                });
+            }
+        },
+        translate: {
+                descriptionKey: 'translateDescription',
+                action: function(args) {
+                    const lang = GM_getValue('commandPanelLanguage', 'english');
+                    const t = translations[lang];
+                    const targetLang = args[0] || 'en';
+                    if (document.getElementById('google_translate_element')) {
+                        commandOutput.innerHTML += `<p>${t.translationAlreadyActive}</p>`;
+                        return;
+                    }
+                    const translateElement = document.createElement('div');
+                    translateElement.id = 'google_translate_element';
+                    translateElement.style.position = 'fixed';
+                    translateElement.style.top = '10px';
+                    translateElement.style.right = '10px';
+                    translateElement.style.zIndex = '9999999';
+                    document.body.appendChild(translateElement);
+                    const script = document.createElement('script');
+                    script.src = `//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit`;
+                    script.onerror = () => {
+                        commandOutput.innerHTML += `<p>${t.translationScriptError}</p>`;
+                    };
+                    document.body.appendChild(script);
+                    unsafeWindow.googleTranslateElementInit = function() {
+                        new google.translate.TranslateElement({
+                            pageLanguage: 'auto',
+                            includedLanguages: 'en,ru,es,fr,de,it,pt,ja,ko,zh-CN,ar',
+                            layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                        }, 'google_translate_element');
+                        commandOutput.innerHTML += `<p>${t.translationActivated}</p>`;
+                    };
+                }
+            },
+        darkmode: {
+                descriptionKey: 'darkmodeDescription',
+                action: function() {
+                    const lang = GM_getValue('commandPanelLanguage', 'english');
+                    const t = translations[lang];
+                    const currentUrl = window.location.hostname;
+                    let darkModeUrls = GM_getValue('darkModeUrls', []);
+                    if (darkModeUrls.includes(currentUrl)) {
+                        darkModeUrls = darkModeUrls.filter(url => url !== currentUrl);
+                        const darkModeStyle = document.getElementById('darkModeStyle');
+                        if (darkModeStyle) {
+                            darkModeStyle.remove();
+                        }
+                        commandOutput.innerHTML += `<p>${t.darkModeDisabled}</p>`;
+                    } else {
+                        darkModeUrls.push(currentUrl);
+                        const style = document.createElement('style');
+                        style.id = 'darkModeStyle';
+                        style.textContent = `
+                            body, body * {
+                                background-color: #1a1a1a !important;
+                                color: #e0e0e0 !important;
+                                border-color: #333 !important;
+                            }
+                        `;
+                        document.head.appendChild(style);
+                        commandOutput.innerHTML += `<p>${t.darkModeEnabled}</p>`;
+                    }
+                    GM_setValue('darkModeUrls', darkModeUrls);
+                }
+            },
+        timer: {
+            descriptionKey: 'timerDescription',
+            action: function(args) {
+                const minutes = parseInt(args[0]) || 5;
+                const seconds = minutes * 60;
+                let remainingTime = seconds;
+                const intervalId = setInterval(() => {
+                    remainingTime--;
+                    const mins = Math.floor(remainingTime / 60);
+                    const secs = remainingTime % 60;
+                    commandOutput.innerHTML += `<p>Remaining time: ${mins}:${secs.toString().padStart(2, '0')}</p>`;
+                    if (remainingTime <= 0) {
+                        clearInterval(intervalId);
+                        alert('Timer finished!');
+                    }
+                }, 1000);
+            }
+        },
+        calc: {
+            descriptionKey: 'calcDescription',
+            action: function(args) {
+                const expression = args.join(' ');
+                try {
+                    const result = eval(expression);
+                    commandOutput.innerHTML += `<p>Result: ${result}</p>`;
+                } catch (error) {
+                    commandOutput.innerHTML += `<p>Error: Invalid expression</p>`;
+                }
+            }
+        },
+        weather: {
+                descriptionKey: 'weatherDescription',
+                action: function(args) {
+                    const lang = GM_getValue('commandPanelLanguage', 'english');
+                    const t = translations[lang];
+                    const city = args.join(' ') || 'Moscow';
+                    GM_xmlhttpRequest({
+                        method: "GET",
+                        url: `https://open-weather13.p.rapidapi.com/city/${encodeURIComponent(city)}/${lang === 'english' ? 'EN' : 'RU'}`,
+                        headers: {
+                            "x-rapidapi-key": "d38edf19d1msh96b9a6f2387f7a5p11277fjsndd57f1eea2c4",
+                            "x-rapidapi-host": "open-weather13.p.rapidapi.com"
+                        },
+                        onload: function(response) {
+                            if (response.status === 200) {
+                                const data = JSON.parse(response.responseText);
+                                const weather = data.weather[0].description;
+                                const temp = data.main.temp;
+                                commandOutput.innerHTML += `<p>${t.weatherIn.replace('{city}', city)}: ${weather}, ${t.temperature}: ${temp}°C</p>`;
+                            } else {
+                                commandOutput.innerHTML += `<p>${t.errorFetchingWeather}</p>`;
+                            }
+                        },
+                        onerror: function(error) {
+                            commandOutput.innerHTML += `<p>${t.errorFetchingWeather}</p>`;
+                        }
+                    });
+                }
+            },
+        summarize: {
+            descriptionKey: 'summarizeDescription',
+            action: function() {
+                const text = document.body.innerText;
+                const sentences = text.match(/[^\.!\?]+[\.!\?]+/g);
+                const summary = sentences.slice(0, 3).join(' ');
+                commandOutput.innerHTML += `<p>Summary: ${summary}</p>`;
+            }
+        }
+    };
+    function promptSaveSite() {
+            const lang = GM_getValue('commandPanelLanguage', 'english');
+            const t = translations[lang];
+            commandOutput.innerHTML += `<p>${t.saveSiteConfirm}</p>`;
+            commandInput.value = '';
+            commandInput.setAttribute('data-waiting-confirmation', 'savesite');
     }
 
     function handleSaveSiteConfirmation(command) {
@@ -766,22 +751,22 @@ function promptSaveSite() {
         }
         commandInput.removeAttribute('data-waiting-confirmation');
     }
-function saveSiteImages() {
-        const lang = GM_getValue('commandPanelLanguage', 'english');
-        const t = translations[lang];
-        const images = document.querySelectorAll('img');
-        const imageUrls = Array.from(images)
-            .map(img => img.src)
-            .filter(src => /\.(png|jpg|jpeg)$/i.test(src));
+    function saveSiteImages() {
+            const lang = GM_getValue('commandPanelLanguage', 'english');
+            const t = translations[lang];
+            const images = document.querySelectorAll('img');
+            const imageUrls = Array.from(images)
+                .map(img => img.src)
+                .filter(src => /\.(png|jpg|jpeg)$/i.test(src));
 
-        if (imageUrls.length === 0) {
-            commandOutput.innerHTML += `<p>${t.noImagesToSave}</p>`;
-            return;
-        }
+            if (imageUrls.length === 0) {
+                commandOutput.innerHTML += `<p>${t.noImagesToSave}</p>`;
+                return;
+            }
 
-        commandOutput.innerHTML += `<p>${t.foundImagesToSave.replace('{0}', imageUrls.length)}</p>`;
-        commandInput.value = '';
-        commandInput.setAttribute('data-waiting-confirmation', 'savesiteimages');
+            commandOutput.innerHTML += `<p>${t.foundImagesToSave.replace('{0}', imageUrls.length)}</p>`;
+            commandInput.value = '';
+            commandInput.setAttribute('data-waiting-confirmation', 'savesiteimages');
     }
 
     function saveSiteVideos() {
@@ -823,42 +808,42 @@ function saveSiteImages() {
         commandInput.value = '';
         commandInput.setAttribute('data-waiting-confirmation', 'savesitemedia');
     }
-function handleCommand(command) {
-        const args = command.split(' ');
-        const cmd = args.shift().toLowerCase();
-        const lang = GM_getValue('commandPanelLanguage', 'english');
-        const t = translations[lang];
+    function handleCommand(command) {
+            const args = command.split(' ');
+            const cmd = args.shift().toLowerCase();
+            const lang = GM_getValue('commandPanelLanguage', 'english');
+            const t = translations[lang];
 
-        commandOutput.innerHTML += `<p><span style="color: #16C60C;">${nickname}:~#</span> ${command}</p>`;
-        const waitingConfirmation = commandInput.getAttribute('data-waiting-confirmation');
-        if (waitingConfirmation) {
-            if (waitingConfirmation === 'clearcache') {
-                if (cmd === 'y' || cmd === 'yes') {
-                    commandOutput.innerHTML += `<p>${t.clearingCache}</p>`;
-                    setTimeout(clearCacheAndReload, 1500);
-                } else {
-                    commandOutput.innerHTML += `<p>${t.operationCancelled}</p>`;
+            commandOutput.innerHTML += `<p><span style="color: #16C60C;">${nickname}:~#</span> ${command}</p>`;
+            const waitingConfirmation = commandInput.getAttribute('data-waiting-confirmation');
+            if (waitingConfirmation) {
+                if (waitingConfirmation === 'clearcache') {
+                    if (cmd === 'y' || cmd === 'yes') {
+                        commandOutput.innerHTML += `<p>${t.clearingCache}</p>`;
+                        setTimeout(clearCacheAndReload, 1500);
+                    } else {
+                        commandOutput.innerHTML += `<p>${t.operationCancelled}</p>`;
+                    }
+                    commandInput.removeAttribute('data-waiting-confirmation');
+                } else if (waitingConfirmation === 'savesite') {
+                    handleSaveSiteConfirmation(command);
+                } else if (['savesiteimages', 'savesitevideos', 'savesitemedia'].includes(waitingConfirmation)) {
+                    handleMediaConfirmation(command, waitingConfirmation);
                 }
-                commandInput.removeAttribute('data-waiting-confirmation');
-            } else if (waitingConfirmation === 'savesite') {
-                handleSaveSiteConfirmation(command);
-            } else if (['savesiteimages', 'savesitevideos', 'savesitemedia'].includes(waitingConfirmation)) {
-                handleMediaConfirmation(command, waitingConfirmation);
+            } else if (commands[cmd]) {
+                commands[cmd].action(args);
+            } else {
+                commandOutput.innerHTML += `<p class="error-text">"${cmd}" ${t.commandNotFound}</p>`;
             }
-        } else if (commands[cmd]) {
-            commands[cmd].action(args);
-        } else {
-            commandOutput.innerHTML += `<p class="error-text">"${cmd}" ${t.commandNotFound}</p>`;
-        }
-        commandHistory.push(command);
-        GM_setValue('commandPanelHistory', JSON.stringify(commandHistory));
-        historyIndex = -1;
-        commandInput.value = '';
-        commandContent.scrollTop = commandContent.scrollHeight;
-        setTimeout(() => {
-            const outputElement = document.getElementById('command-output');
-            outputElement.scrollTop = outputElement.scrollHeight;
-        }, 0);
+            commandHistory.push(command);
+            GM_setValue('commandPanelHistory', JSON.stringify(commandHistory));
+            historyIndex = -1;
+            commandInput.value = '';
+            commandContent.scrollTop = commandContent.scrollHeight;
+            setTimeout(() => {
+                const outputElement = document.getElementById('command-output');
+                outputElement.scrollTop = outputElement.scrollHeight;
+            }, 0);
     }
     function handleMediaConfirmation(command, type) {
         const lang = GM_getValue('commandPanelLanguage', 'english');
@@ -1086,55 +1071,55 @@ function handleCommand(command) {
     }
     unsafeWindow.clearexcludedsites = clearExcludedSites;
     commandInput.setAttribute('autocomplete', 'off');
-function updateInterface() {
-        const lang = GM_getValue('commandPanelLanguage', 'english');
-        const t = translations[lang];
+    function updateInterface() {
+            const lang = GM_getValue('commandPanelLanguage', 'english');
+            const t = translations[lang];
 
-        document.getElementById('command-panel-title').textContent = t.commandPrompt;
-        document.querySelector('#settings-header span:nth-child(2)').textContent = t.settings;
-        document.querySelector('#settings-content p:nth-of-type(1)').textContent = t.changeNickname;
-        document.getElementById('save-nickname').textContent = t.save;
-        document.querySelector('#settings-content p:nth-of-type(2)').textContent = t.selectBackground;
-        document.getElementById('reset-background').textContent = t.reset;
-        document.querySelector('#settings-content p:nth-of-type(3)').textContent = t.excludeSites;
-        document.getElementById('save-exclusions').textContent = t.saveExclusions;
-        document.querySelector('#settings-content p:nth-of-type(4)').textContent = t.autoOpen;
-        document.querySelector('#settings-content p:nth-of-type(5)').textContent = t.transparency;
-        document.querySelector('#nickname-prompt p').textContent = t.enterNickname;
-        document.getElementById('nickname-submit').textContent = 'OK';
+            document.getElementById('command-panel-title').textContent = t.commandPrompt;
+            document.querySelector('#settings-header span:nth-child(2)').textContent = t.settings;
+            document.querySelector('#settings-content p:nth-of-type(1)').textContent = t.changeNickname;
+            document.getElementById('save-nickname').textContent = t.save;
+            document.querySelector('#settings-content p:nth-of-type(2)').textContent = t.selectBackground;
+            document.getElementById('reset-background').textContent = t.reset;
+            document.querySelector('#settings-content p:nth-of-type(3)').textContent = t.excludeSites;
+            document.getElementById('save-exclusions').textContent = t.saveExclusions;
+            document.querySelector('#settings-content p:nth-of-type(4)').textContent = t.autoOpen;
+            document.querySelector('#settings-content p:nth-of-type(5)').textContent = t.transparency;
+            document.querySelector('#nickname-prompt p').textContent = t.enterNickname;
+            document.getElementById('nickname-submit').textContent = 'OK';
 
-        updateBrowserInfo();
+            updateBrowserInfo();
 
-        for (let cmd in commands) {
-            if (commands[cmd].descriptionKey) {
-                commands[cmd].description = t[commands[cmd].descriptionKey];
+            for (let cmd in commands) {
+                if (commands[cmd].descriptionKey) {
+                    commands[cmd].description = t[commands[cmd].descriptionKey];
+                }
             }
         }
-    }
-const savedLanguage = GM_getValue('commandPanelLanguage', 'english');
-updateInterface();
-
-function setLanguage(lang) {
-    GM_setValue('commandPanelLanguage', lang);
+    const savedLanguage = GM_getValue('commandPanelLanguage', 'english');
     updateInterface();
-}
-function applyDarkModeOnLoad() {
-    const darkModeUrls = GM_getValue('darkModeUrls', []);
-    const currentUrl = window.location.hostname;
 
-    if (darkModeUrls.includes(currentUrl)) {
-        const style = document.createElement('style');
-        style.id = 'darkModeStyle';
-        style.textContent = `
-            body, body * {
-                background-color: #1a1a1a !important;
-                color: #e0e0e0 !important;
-                border-color: #333 !important;
-            }
-        `;
-        document.head.appendChild(style);
+    function setLanguage(lang) {
+        GM_setValue('commandPanelLanguage', lang);
+        updateInterface();
     }
-}
+    function applyDarkModeOnLoad() {
+        const darkModeUrls = GM_getValue('darkModeUrls', []);
+        const currentUrl = window.location.hostname;
 
-applyDarkModeOnLoad();
+        if (darkModeUrls.includes(currentUrl)) {
+            const style = document.createElement('style');
+            style.id = 'darkModeStyle';
+            style.textContent = `
+                body, body * {
+                    background-color: #1a1a1a !important;
+                    color: #e0e0e0 !important;
+                    border-color: #333 !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+
+    applyDarkModeOnLoad();
 })();
