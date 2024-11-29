@@ -2,7 +2,7 @@
 // @name WebPrompt
 // @author MaximDev
 // @namespace MAX1MDEV
-// @version 1.1
+// @version 1.5
 // @homepage https://github.com/MAX1MDEV/WebPrompt
 // @supportURL https://github.com/MAX1MDEV/WebPrompt/issues
 // @updateURL https://raw.githubusercontent.com/MAX1MDEV/WebPrompt/main/WebPrompt.user.js
@@ -20,6 +20,12 @@
 
 (function() {
     'use strict';
+    if (window.location.href.includes('recaptcha') ||
+        window.location.href.includes('captcha') ||
+        window.location.href.includes('cloudflare')||
+        window !== window.top) {
+        return;
+    }
     const translations = {
         english: {
             commandPrompt: 'Command Prompt',
