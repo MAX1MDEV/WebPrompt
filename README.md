@@ -18,8 +18,6 @@ The prompt looks like this:
 
 **Found any issues or want a new feature?** Write them in the [Issues](https://github.com/MAX1MDEV/WebPrompt/issues) section as a *Bug Report* or *Feature Request*.
 
-**Note: This script does not allow loading iframe captchas.**
-
 ### Supported site
 | **Command**                              | **Function**                                                                                   |
 | :--------------------------------------- | :-------------------------------------------------------------------------------------------- |
@@ -66,7 +64,6 @@ Automatic updating of the script may require your confirmation.
 
 **Нашли проблему или хотите предложить новую команду?** Напишите об этом в [Issues](https://github.com/MAX1MDEV/WebPrompt/issues) как *Bug Report* или *Feature Request*.
 
-**Примечание: Даный скрипт не позволяет загружаться iframe капчи.**
 
 ### Поддерживаемые команды
 | **Команда**                              | **Функция**                                                                                     |
