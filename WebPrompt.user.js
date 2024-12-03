@@ -2,7 +2,7 @@
 // @name WebPrompt
 // @author MaximDev
 // @namespace MAX1MDEV
-// @version 1.5
+// @version 2.0
 // @homepage https://github.com/MAX1MDEV/WebPrompt
 // @supportURL https://github.com/MAX1MDEV/WebPrompt/issues
 // @updateURL https://raw.githubusercontent.com/MAX1MDEV/WebPrompt/main/WebPrompt.user.js
@@ -98,7 +98,20 @@
             translationAlreadyActive: 'Translation is already active',
             translationScriptError: 'Error loading translation script',
             translationActivated: 'Translation activated',
-            darkModeEnabled: 'Dark mode enabled for this site'
+            darkModeEnabled: 'Dark mode enabled for this site',
+            steamDescription: 'Steam helper in two languages',
+            steamMissingCommand: 'steam: missing command\n\nUsage: steam <command>\nEnter: help steam for details',
+            steamUnknownCommand: 'Unknown steam command. Use "help steam" for available commands.',
+            steamHelp: 'Steam: Steam helper\nUsage: steam <command>\n\nCommands:\n-clearwhitelist {time in milliseconds} <stop> Clear whitelist\n-monthlyincome {number of months} Display of income for the period',
+            steamWishlistError: 'Error: This command can only be used on Steam wishlist pages.',
+            steamClearingStopped: 'Stopped clearing whitelist.',
+            steamNoActiveClearing: 'No active whitelist clearing process to stop.',
+            steamClearingStarted: 'Started clearing whitelist. Interval: {interval}ms. Use "steam -clearwhitelist stop" to stop.',
+            steamIncomeError: 'Error: This command can only be used on the purchase history page of a Steam account.',
+            steamNoHistoryError: 'Error: Could not find purchase history on this page.',
+            steamIncomeResult: 'Your income for {months} month(s) is: {income} {currency}',
+            steamIncomeFetchError: 'Error: Could not calculate income. Make sure you have sufficient purchase history.',
+            steamIncomeLoss: 'You did not earn anything for {months} month(s), you lost: {loss} {currency}'
         },
         russian: {
             commandPrompt: 'Командная строка',
@@ -170,7 +183,20 @@
             screenshotError: 'Ошибка при создании скриншота',
             translationAlreadyActive: 'Перевод уже активирован',
             translationScriptError: 'Ошибка загрузки скрипта перевода',
-            translationActivated: 'Перевод активирован'
+            translationActivated: 'Перевод активирован',
+            steamDescription: 'Помощник для steam на двух языках',
+            steamMissingCommand: 'steam: отсутствует команда\n\nИспользование: steam <command>\nВведите: help steam для подробностей',
+            steamUnknownCommand: 'Неизвестная команда steam. Используйте "help steam" для просмотра доступных команд.',
+            steamHelp: 'Steam: Помощник для steam\nИспользование: steam <command>\n\nКоманды:\n-clearwhitelist {время в милисекундах} <stop> Очистка вайтлиста\n-monthlyincome {количество месяцев} Отображение дохода за период',
+            steamWishlistError: 'Ошибка: Эта команда может быть использована только на страницах списка желаемого Steam.',
+            steamClearingStopped: 'Очистка списка желаемого остановлена.',
+            steamNoActiveClearing: 'Нет активного процесса очистки списка желаемого для остановки.',
+            steamClearingStarted: 'Начата очистка списка желаемого. Интервал: {interval}мс. Используйте "steam -clearwhitelist stop" для остановки.',
+            steamIncomeError: 'Ошибка: Эта команда может быть использована только на странице истории покупок аккаунта Steam.',
+            steamNoHistoryError: 'Ошибка: Не удалось найти историю покупок на этой странице.',
+            steamIncomeResult: 'Ваш доход за {months} месяц(ев) составляет: {income} {currency}',
+            steamIncomeFetchError: 'Ошибка: Не удалось рассчитать доход. Убедитесь, что у вас достаточно истории покупок.',
+            steamIncomeLoss: 'Вы не заработали ничего за {months} месяц(ев), вы потеряли: {loss} {currency}'
         }
     };
     const style = document.createElement('style');
@@ -492,9 +518,11 @@
                 const lang = GM_getValue('commandPanelLanguage', 'english');
                 const t = translations[lang];
                 if (args.length > 0) {
-                    const cmd = commands[args[0]];
-                    if (cmd) {
-                        commandOutput.innerHTML += `<p>${args[0]}: ${t[cmd.descriptionKey]}</p>`;
+                    const cmd = args[0].toLowerCase();
+                    if (cmd === 'steam') {
+                        commandOutput.innerHTML += `<p>${t.steamHelp}</p>`;
+                    } else if (commands[cmd]) {
+                        commandOutput.innerHTML += `<p>${cmd}: ${t[commands[cmd].descriptionKey]}</p>`;
                     } else {
                         commandOutput.innerHTML += `<p class="error-text">${args[0]} ${t.commandNotFound}</p>`;
                     }
@@ -716,6 +744,33 @@
                 const summary = sentences.slice(0, 3).join(' ');
                 commandOutput.innerHTML += `<p>Summary: ${summary}</p>`;
             }
+        },
+        steam: {
+            descriptionKey: 'steamDescription',
+            action: function(args) {
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
+
+                if (args.length === 0) {
+                    commandOutput.innerHTML += `<p>${t.steamMissingCommand}</p>`;
+                    return;
+                }
+
+                const subCommand = args[0].toLowerCase();
+
+                switch (subCommand) {
+                    case '-clearwhitelist':
+                        handleClearWhitelist(args.slice(1));
+                        break;
+                    case '-monthlyincome': {
+                        const months = args[1] ? parseInt(args[1]) : 1;
+                        handleMonthlyIncome(months);
+                        break;
+                    }
+                    default:
+                        commandOutput.innerHTML += `<p>${t.steamUnknownCommand}</p>`;
+                }
+            }
         }
     };
     function promptSaveSite() {
@@ -814,43 +869,52 @@
         commandInput.value = '';
         commandInput.setAttribute('data-waiting-confirmation', 'savesitemedia');
     }
-    function handleCommand(command) {
-            const args = command.split(' ');
-            const cmd = args.shift().toLowerCase();
-            const lang = GM_getValue('commandPanelLanguage', 'english');
-            const t = translations[lang];
 
-            commandOutput.innerHTML += `<p><span style="color: #16C60C;">${nickname}:~#</span> ${command}</p>`;
-            const waitingConfirmation = commandInput.getAttribute('data-waiting-confirmation');
-            if (waitingConfirmation) {
-                if (waitingConfirmation === 'clearcache') {
-                    if (cmd === 'y' || cmd === 'yes') {
-                        commandOutput.innerHTML += `<p>${t.clearingCache}</p>`;
-                        setTimeout(clearCacheAndReload, 1500);
-                    } else {
-                        commandOutput.innerHTML += `<p>${t.operationCancelled}</p>`;
-                    }
-                    commandInput.removeAttribute('data-waiting-confirmation');
-                } else if (waitingConfirmation === 'savesite') {
-                    handleSaveSiteConfirmation(command);
-                } else if (['savesiteimages', 'savesitevideos', 'savesitemedia'].includes(waitingConfirmation)) {
-                    handleMediaConfirmation(command, waitingConfirmation);
+    function handleCommand(command) {
+        const args = command.split(' ');
+        const cmd = args.shift().toLowerCase();
+        const lang = GM_getValue('commandPanelLanguage', 'english');
+        const t = translations[lang];
+
+        commandInput.value = '';
+
+        commandOutput.innerHTML += `<p><span style="color: #16C60C;">${nickname}:~#</span> ${command}</p>`;
+        const waitingConfirmation = commandInput.getAttribute('data-waiting-confirmation');
+        if (waitingConfirmation) {
+            if (waitingConfirmation === 'clearcache') {
+                if (cmd === 'y' || cmd === 'yes') {
+                    commandOutput.innerHTML += `<p>${t.clearingCache}</p>`;
+                    setTimeout(clearCacheAndReload, 1500);
+                } else {
+                    commandOutput.innerHTML += `<p>${t.operationCancelled}</p>`;
                 }
-            } else if (commands[cmd]) {
-                commands[cmd].action(args);
-            } else {
-                commandOutput.innerHTML += `<p class="error-text">"${cmd}" ${t.commandNotFound}</p>`;
+                commandInput.removeAttribute('data-waiting-confirmation');
+            } else if (waitingConfirmation === 'savesite') {
+                handleSaveSiteConfirmation(command);
+            } else if (['savesiteimages', 'savesitevideos', 'savesitemedia'].includes(waitingConfirmation)) {
+                handleMediaConfirmation(command, waitingConfirmation);
             }
-            commandHistory.push(command);
-            GM_setValue('commandPanelHistory', JSON.stringify(commandHistory));
-            historyIndex = -1;
-            commandInput.value = '';
-            commandContent.scrollTop = commandContent.scrollHeight;
-            setTimeout(() => {
-                const outputElement = document.getElementById('command-output');
-                outputElement.scrollTop = outputElement.scrollHeight;
-            }, 0);
+        } else if (commands[cmd]) {
+            commands[cmd].action(args);
+        } else {
+            commandOutput.innerHTML += `<p class="error-text">"${cmd}" ${t.commandNotFound}</p>`;
+        }
+        if (cmd === 'clearwhitelist') {
+            handleClearWhitelist(args);
+        }
+        if (!Array.isArray(commandHistory)) {
+            commandHistory = [];
+        }
+        commandHistory.push(command);
+        GM_setValue('commandPanelHistory', JSON.stringify(commandHistory));
+        historyIndex = -1;
+        commandContent.scrollTop = commandContent.scrollHeight;
+        setTimeout(() => {
+            const outputElement = document.getElementById('command-output');
+            outputElement.scrollTop = outputElement.scrollHeight;
+        }, 0);
     }
+
     function handleMediaConfirmation(command, type) {
         const lang = GM_getValue('commandPanelLanguage', 'english');
         const t = translations[lang];
@@ -931,16 +995,16 @@
             e.preventDefault();
             if (historyIndex < commandHistory.length - 1) {
                 historyIndex++;
-                commandInput.value = commandHistory[commandHistory.length - 1 - historyIndex];
+                this.value = commandHistory[commandHistory.length - 1 - historyIndex];
             }
         } else if (e.key === 'ArrowDown') {
             e.preventDefault();
             if (historyIndex > 0) {
                 historyIndex--;
-                commandInput.value = commandHistory[commandHistory.length - 1 - historyIndex];
+                this.value = commandHistory[commandHistory.length - 1 - historyIndex];
             } else if (historyIndex === 0) {
                 historyIndex = -1;
-                commandInput.value = '';
+                this.value = '';
             }
         }
     });
@@ -1128,4 +1192,127 @@
     }
 
     applyDarkModeOnLoad();
+
+    function handleClearWhitelist(args) {
+        const lang = GM_getValue('commandPanelLanguage', 'english');
+        const t = translations[lang];
+        const url = window.location.href;
+
+        if (!url.startsWith('https://store.steampowered.com/wishlist/id/')) {
+            commandOutput.innerHTML += `<p>${t.steamWishlistError}</p>`;
+            return;
+        }
+
+        let interval = 1000;
+        if (args.length > 0 && !isNaN(args[0])) {
+            interval = parseInt(args[0]);
+        }
+
+        if (args.includes('stop')) {
+            if (window.clearWhitelistInterval) {
+                clearInterval(window.clearWhitelistInterval);
+                window.clearWhitelistInterval = null;
+                commandOutput.innerHTML += `<p>${t.steamClearingStopped}</p>`;
+            } else {
+                commandOutput.innerHTML += `<p>${t.steamNoActiveClearing}</p>`;
+            }
+            return;
+        }
+
+        function removeGames() {
+            const buttons = document.querySelectorAll('button.nK8lTB5HZ5o-.Focusable');
+            buttons.forEach(button => button.click());
+            }
+            if (window.clearWhitelistInterval) {
+                clearInterval(window.clearWhitelistInterval);
+            }
+            window.clearWhitelistInterval = setInterval(removeGames, interval);
+            removeGames();
+            commandOutput.innerHTML += `<p>${t.steamClearingStarted.replace('{interval}', interval)}</p>`;
+        }
+
+        function handleMonthlyIncome(months = 1) {
+        const lang = GM_getValue('commandPanelLanguage', 'english');
+        const t = translations[lang];
+
+        if (window.location.href !== 'https://store.steampowered.com/account/history/') {
+            commandOutput.innerHTML += `<p>${t.steamIncomeError}</p>`;
+            return;
+        }
+
+        const table = document.querySelector('table.wallet_history_table');
+        if (!table) {
+            commandOutput.innerHTML += `<p>${t.steamNoHistoryError} (Table not found)</p>`;
+            return;
+        }
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) {
+            commandOutput.innerHTML += `<p>${t.steamNoHistoryError} (tbody not found)</p>`;
+            return;
+        }
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        let startBalance = null;
+        let endBalance = null;
+        let startDate = null;
+        let endDate = null;
+        let currency = '';
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const dateCell = row.querySelector('td.wht_date');
+            const balanceCell = row.querySelector('td.wht_wallet_balance');
+
+            if (!dateCell || !balanceCell) continue;
+
+            const date = new Date(dateCell.textContent.trim());
+            if (isNaN(date.getTime())) continue;
+
+            const balanceText = balanceCell.textContent.trim();
+            const balanceMatch = balanceText.match(/([0-9.,]+)\s*([^\s]+)/);
+            if (!balanceMatch) continue;
+
+            const balance = parseFloat(balanceMatch[1].replace(',', '.'));
+            currency = balanceMatch[2];
+
+            if (endDate === null) {
+                endDate = date;
+                endBalance = balance;
+            }
+
+            if (startDate === null || date < startDate) {
+                startDate = date;
+                startBalance = balance;
+            }
+
+            if (differenceInMonths(endDate, date) >= months) {
+                break;
+            }
+        }
+
+        if (startBalance !== null && endBalance !== null) {
+            if (differenceInMonths(endDate, startDate) < months) {
+                commandOutput.innerHTML += `<p>${t.steamNoHistoryError} (Not enough history for ${months} month(s))</p>`;
+            } else {
+                const income = endBalance - startBalance;
+                if (income >= 0) {
+                    commandOutput.innerHTML += `<p>${t.steamIncomeResult.replace('{months}', months).replace('{income}', income.toFixed(2)).replace('{currency}', currency)}</p>`;
+                } else {
+                    const lossAmount = Math.abs(income);
+                    commandOutput.innerHTML += `<p>${t.steamIncomeLoss.replace('{months}', months).replace('{loss}', lossAmount.toFixed(2)).replace('{currency}', currency)}</p>`;
+                }
+            }
+        } else {
+            commandOutput.innerHTML += `<p>${t.steamIncomeFetchError}</p>`;
+        }
+    }
+
+    function differenceInMonths(date1, date2) {
+        let months;
+        months = (date1.getFullYear() - date2.getFullYear()) * 12;
+        months -= date2.getMonth();
+        months += date1.getMonth();
+        return months <= 0 ? 0 : months;
+    }
 })();
