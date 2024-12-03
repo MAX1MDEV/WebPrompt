@@ -18,7 +18,7 @@ The prompt looks like this:
 
 **Found any issues or want a new feature?** Write them in the [Issues](https://github.com/MAX1MDEV/WebPrompt/issues) section as a *Bug Report* or *Feature Request*.
 
-### Supported site
+### Supported commands
 | **Command**                              | **Function**                                                                                   |
 | :--------------------------------------- | :-------------------------------------------------------------------------------------------- |
 | **help**                                 | Displays help information for available commands.                                              |
@@ -33,6 +33,7 @@ The prompt looks like this:
 | **calc**                                 | Opens a calculator for performing calculations.                                                |
 | **weather**                              | Displays the current weather for a specified location.                                         |
 | **summarize**                            | Provides a brief summary of the current page.                                                  |
+| **steam**                                | Clearing spike desired in Steam and calculating income in Steam purchase history.                      |
 
 ### Installation
 1. Install one of the browser extensions to run user scripts.  
@@ -80,6 +81,7 @@ Automatic updating of the script may require your confirmation.
 | **calc**                                 | Открывает калькулятор для выполнения расчетов.                                                 |
 | **weather**                              | Показывает текущую погоду для заданного местоположения.                                        |
 | **summarize**                            | Выводит краткую информацию со страницы.                                                       |
+| **steam**                                | Очистка спика желаемого в Steam и расчет дохода в истории покупок Steam.                       |
 
 ### Установка
 1. Установить одно из браузерных расширений для выполнения пользовательских скриптов.  
