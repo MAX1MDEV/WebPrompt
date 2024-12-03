@@ -33,7 +33,7 @@ The prompt looks like this:
 | **calc**                                 | Opens a calculator for performing calculations.                                                |
 | **weather**                              | Displays the current weather for a specified location.                                         |
 | **summarize**                            | Provides a brief summary of the current page.                                                  |
-| **steam**                                | Clearing spike desired in Steam and calculating income in Steam purchase history.                      |
+| **steam**                                | Clearing whitelist in Steam and calculating income in Steam purchase history.                      |
 
 ### Installation
 1. Install one of the browser extensions to run user scripts.  
