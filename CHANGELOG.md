@@ -1,4 +1,7 @@
 ## Changelog
+№№№ v3.0 (2025-01=22)
+* Completely reworked `clearCacheAndReload()` function, now the command works flawlessly.
+***
 ### v2.0 (2024-12-04)
 * Added `steam` command with subcommands.
 * Implemented removal of games from wishlist and calculation of income in Steam purchase history.
@@ -15,6 +18,9 @@
 ***
 
 ## Список изменений
+№№№ v3.0 (2025-01=22)
+* Полностью переработана функция `clearCacheAndReload()`, теперь команда работает безупречно.
+***
 ### v2.0 (2024-12-04)
 * Добавлена команда `steam` с подкомандами.
 * Реализовано удаление игр из списка желаемого и расчет дохода в истории покупок Steam.
