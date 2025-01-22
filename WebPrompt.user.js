@@ -2,7 +2,7 @@
 // @name WebPrompt
 // @author MaximDev
 // @namespace MAX1MDEV
-// @version 2.0
+// @version 3.0
 // @homepage https://github.com/MAX1MDEV/WebPrompt
 // @supportURL https://github.com/MAX1MDEV/WebPrompt/issues
 // @updateURL https://raw.githubusercontent.com/MAX1MDEV/WebPrompt/main/WebPrompt.user.js
@@ -504,6 +504,11 @@
         hideNicknamePrompt();
     });
     function clearCacheAndReload() {
+        document.cookie.split(";").forEach(function(c) {
+            document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        });
+        localStorage.clear();
+        sessionStorage.clear();
         if (window.caches) {
             caches.keys().then(function(names) {
                 for (let name of names) caches.delete(name);
