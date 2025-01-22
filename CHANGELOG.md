@@ -1,5 +1,5 @@
 ## Changelog
-№№№ v3.0 (2025-01=22)
+### v3.0 (2025-01=22)
 * Completely reworked `clearCacheAndReload()` function, now the command works flawlessly.
 ***
 ### v2.0 (2024-12-04)
@@ -18,7 +18,7 @@
 ***
 
 ## Список изменений
-№№№ v3.0 (2025-01=22)
+### v3.0 (2025-01=22)
 * Полностью переработана функция `clearCacheAndReload()`, теперь команда работает безупречно.
 ***
 ### v2.0 (2024-12-04)
