@@ -2,7 +2,7 @@
 // @name WebPrompt
 // @author MaximDev
 // @namespace MAX1MDEV
-// @version 3.0
+// @version 4.0
 // @homepage https://github.com/MAX1MDEV/WebPrompt
 // @supportURL https://github.com/MAX1MDEV/WebPrompt/issues
 // @updateURL https://raw.githubusercontent.com/MAX1MDEV/WebPrompt/main/WebPrompt.user.js
@@ -111,7 +111,10 @@
             steamNoHistoryError: 'Error: Could not find purchase history on this page.',
             steamIncomeResult: 'Your income for {months} month(s) is: {income} {currency}',
             steamIncomeFetchError: 'Error: Could not calculate income. Make sure you have sufficient purchase history.',
-            steamIncomeLoss: 'You did not earn anything for {months} month(s), you lost: {loss} {currency}'
+            steamIncomeLoss: 'You did not earn anything for {months} month(s), you lost: {loss} {currency}',
+            tgPlatformChangeDescription: 'Changes the Telegram platform in iframes from web to android.',
+            tgPlatformChanged: 'Telegram platform changed to Android in iframes.',
+            tgPlatformNotFound: 'No iframes with the Telegram web platform found.'
         },
         russian: {
             commandPrompt: 'Командная строка',
@@ -196,7 +199,10 @@
             steamNoHistoryError: 'Ошибка: Не удалось найти историю покупок на этой странице.',
             steamIncomeResult: 'Ваш доход за {months} месяц(ев) составляет: {income} {currency}',
             steamIncomeFetchError: 'Ошибка: Не удалось рассчитать доход. Убедитесь, что у вас достаточно истории покупок.',
-            steamIncomeLoss: 'Вы не заработали ничего за {months} месяц(ев), вы потеряли: {loss} {currency}'
+            steamIncomeLoss: 'Вы не заработали ничего за {months} месяц(ев), вы потеряли: {loss} {currency}',
+            tgPlatformChangeDescription: 'Изменяет платформу Telegram в iframe с веб на андроид.',
+            tgPlatformChanged: 'Платформа Telegram изменена на Android в iframe.',
+            tgPlatformNotFoun: 'Iframe с платформой Telegram в веб не найден.'
         }
     };
     const style = document.createElement('style');
@@ -547,6 +553,25 @@
                 commandInput.setAttribute('data-waiting-confirmation', 'clearcache');
             }
         },
+        tgplatformchange: {
+            descriptionKey: 'tgPlatformChangeDescription',
+            action: function() {
+                const iframes = document.getElementsByTagName('iframe');
+                let changed = false;
+                for (let iframe of iframes) {
+                    if (iframe.src.includes('tgWebAppPlatform=weba')) {
+                        iframe.src = iframe.src.replace('tgWebAppPlatform=weba', 'tgWebAppPlatform=android');
+                        changed = true;
+                    }
+                }
+                const lang = GM_getValue('commandPanelLanguage', 'english');
+                const t = translations[lang];
+                if (changed) {
+                    commandOutput.innerHTML += `<p>${t.tgPlatformChanged}</p>`;
+                } else {
+                    commandOutput.innerHTML += `<p>${t.tgPlatformNotFound}</p>`;
+                }
+        },
         cls: {
             descriptionKey: 'clsDescription',
             action: function() {
@@ -777,7 +802,7 @@
                 }
             }
         }
-    };
+    }};
     function promptSaveSite() {
             const lang = GM_getValue('commandPanelLanguage', 'english');
             const t = translations[lang];
