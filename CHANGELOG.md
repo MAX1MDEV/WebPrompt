@@ -1,5 +1,8 @@
 ## Changelog
-### v3.0 (2025-01=22)
+### v4.0 (2025-02-02)
+* Added `tgplatformchange` command to change the WebApp application platform in the web version of Telegram.
+***
+### v3.0 (2025-01-22)
 * Completely reworked `clearCacheAndReload()` function, now the command works flawlessly.
 ***
 ### v2.0 (2024-12-04)
@@ -18,7 +21,10 @@
 ***
 
 ## Список изменений
-### v3.0 (2025-01=22)
+### v4.0 (2025-02-02)
+* Добавлена команда `tgplatformchange` для изменения платформы WebApp приложения в веб-версии Телеграм.
+***
+### v3.0 (2025-01-22)
 * Полностью переработана функция `clearCacheAndReload()`, теперь команда работает безупречно.
 ***
 ### v2.0 (2024-12-04)
